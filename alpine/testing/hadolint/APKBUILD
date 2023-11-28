@@ -1,0 +1,49 @@
+# Contributor: Andrei Jiroh Eugenio Halili <ajhalili2006@andreijiroh.eu.org>
+# Maintainer: Andrei Jiroh Eugenio Halili <ajhalili2006@andreijiroh.eu.org>
+pkgname=hadolint
+pkgver=2.12.0
+pkgrel=0
+pkgdesc="Dockerfile linter, validate inline bash, written in Haskell"
+url="https://github.com/hadolint/hadolint/"
+arch="all"
+license="GPL-3.0"
+subpackages="$pkgname-dev $pkgname-doc"
+source="https://github.com/hadolint/hadolint/archive/v$pkgver/hadolint-$pkgver.tar.gz"
+builddir="$srcdir/hadolint-$pkgver"
+
+_cabal_home="$srcdir/dist"
+
+cabal_update() {
+	msg "Freezing $pkgname dependencies"
+
+	# Resolve deps and generate fresh cabal.config with version constraints.
+	HOME="$_cabal_home" cabal update
+	(
+		cd "$builddir"
+		HOME="$_cabal_home" cabal v1-freeze --shadow-installed-packages
+
+		# Add version tag at the first line.
+		sed -i "1i--$pkgver" "cabal.config"
+
+		mv "cabal.config" "$startdir/"
+	)
+
+	if ! abuild checksum; then
+		die "Failed to update checksum, run 'abuild checksum' manually"
+	fi
+}
+
+prepare() {
+	default_prepare
+	./striptests
+
+	if [ "$(head -n 1 "$srcdir/cabal.config")" != "--$pkgver" ]; then
+		die "Requirements file is outdated, run 'abuild cabal_update'"
+	fi
+
+	ln -sf "$srcdir/cabal.config" "$builddir/cabal.config"
+}
+
+sha512sums="
+668d9006c36f21a34405b3a5b499125aa283dc2fe37712950709b8e5059eac557b58d0733161b1520fc82db81132fbc199ae4bb519928c4b5ca79bf0ebec147b  hadolint-2.12.0.tar.gz
+"
