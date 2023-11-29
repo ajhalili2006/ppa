@@ -1,0 +1,50 @@
+# Contributor: Andrei Jiroh Eugenio Halili <ajhalili2006@andreijiroh.eu.org>
+# Maintainer: Andrei Jiroh Eugenio Halili <ajhalili2006@andreijiroh.eu.org>
+pkgname=terraform
+pkgver=1.6.5
+pkgrel=0
+pkgdesc="Building, changing and combining infrastructure safely and efficiently"
+url="https://www.terraform.io"
+arch="all"
+license="BUSL-1.0"
+subpackages="$pkgname-dev $pkgname-doc"
+source="https://github.com/hashicorp/terraform/archive/v$pkgver/terraform-$pkgver.tar.gz"
+makedepends="go"
+checkdepends="openssh-client"
+source="
+	$pkgname-$pkgver.tar.gz::https://github.com/hashicorp/terraform/archive/refs/tags/v$pkgver.tar.gz
+	test-skip-test-mtlsserver-nocertfails.patch
+	"
+options="net"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+export GOFLAGS="$GOFLAGS -modcacherw"
+
+build() {
+	go build -v -o bin/$pkgname \
+		-ldflags "-X main.GitCommit=v$pkgver -X github.com/hashicorp/terraform/version.Prerelease="
+}
+
+check() {
+	case "$CARCH" in
+	arm*|x86)
+		go list . | xargs -t -n4 \
+			go test -timeout=2m -parallel=4
+		;;
+	*)
+		go test ./...
+		;;
+	esac
+	bin/$pkgname -v
+}
+
+package() {
+	install -Dm755 "$builddir"/bin/$pkgname -t "$pkgdir"/usr/bin
+}
+
+sha512sums="
+588b00bc86905021d5efb41ba62306c2a41c9cd2225fb1aeb956a7845be15d6aa3c7d0365e3b779ea7da415a562094ba091e6a4644add72ba3abe169f3a7d36a  terraform-1.6.5.tar.gz
+d1862dfcd4f3e1e176baa255af664f891b1d6114de24546463f6a799220245a523d9643192efc05575aab41cd1dd72190d9bb5204eb03190043f5ef4f4471f7a  test-skip-test-mtlsserver-nocertfails.patch
+"
