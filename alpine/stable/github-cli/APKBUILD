@@ -1,0 +1,68 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Contributor Andrei Jiroh Eugenio Halili <ajhalili2006@gmail.com>
+# Maintainer: Andrei Jiroh Eugenio Halili <ajhalili2006@gmail.com>
+pkgname=github-cli
+pkgver=2.39.2
+pkgrel=0
+pkgdesc="CLI for dealing with GitHub"
+options="net" # Need to fetch modules
+url="https://cli.github.com"
+arch="all"
+license="MIT"
+depends="git"
+makedepends="go"
+checkdepends="openssh-keygen openssh-client"
+subpackages="
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-zsh-completion
+	"
+source="https://github.com/cli/cli/archive/v$pkgver/github-cli-$pkgver.tar.gz
+	no-ignore-goflags.patch
+	"
+builddir="$srcdir/cli-$pkgver"
+
+export CGO_ENABLED=0
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+prepare() {
+	default_prepare
+
+	# TODO: These tests invoke the TTY and our container *really* does not like that
+	# Copied from https://github.com/archlinux/svntogit-community/blob/packages/github-cli/trunk/PKGBUILD
+	rm pkg/cmd/auth/login/login_test.go
+}
+
+build() {
+	CGO_CPPFLAGS="$CPPFLAGS" \
+	CGO_CFLAGS="$CFLAGS" \
+	CGO_CXXFLAGS="$CXXFLAGS" \
+	CGO_LDFLAGS="$LDFLAGS" \
+	\
+	make GH_VERSION="v$pkgver" bin/gh manpages
+	bin/gh completion -s bash | install -Dm0644 /dev/stdin \
+		share/bash-completion/completions/gh
+	bin/gh completion -s zsh | install -Dm0644 /dev/stdin \
+		share/zsh/site-functions/_gh
+}
+
+check() {
+	export TZ=Europe/London
+	# skip tests that fail in official CI
+	export GITHUB_ACTIONS=true
+	go test ./...
+}
+
+package() {
+	install -Dm755 bin/gh "$pkgdir"/usr/bin/gh
+
+	mkdir -p "$pkgdir"/usr
+	cp -r share "$pkgdir"/usr
+}
+
+sha512sums="
+7030284f41945b85124902b5ae720fcbb6e8fab763d82dd5886e7a4e53e4544234bfea128150c66eece3778858b52ec846c5e148b3e71d912c4324dc4974767b  github-cli-2.39.2.tar.gz
+57be81e57c0bb5c36e07b6ff2aab661f1a9cd0bbab3ef159c24d59098451858c44fce09d2f5eb86380044568a6acc46ed65b56a87f5a3dc4057d5579e8f420aa  no-ignore-goflags.patch
+"
