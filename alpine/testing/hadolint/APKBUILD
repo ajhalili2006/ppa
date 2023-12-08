@@ -10,6 +10,7 @@ license="GPL-3.0"
 makedepends="cabal ghc libffi-dev"
 source="https://github.com/hadolint/hadolint/archive/v$pkgver/hadolint-$pkgver.tar.gz"
 builddir="$srcdir/hadolint-$pkgver"
+options="chmod-clean net"
 
 _cabal_home="$srcdir/dist"
 
@@ -20,7 +21,7 @@ cabal_update() {
 	HOME="$_cabal_home" cabal update
 	(
 		cd "$builddir"
-		HOME="$_cabal_home" cabal v1-freeze --shadow-installed-packages
+		HOME="$_cabal_home" cabal freeze --shadow-installed-packages
 
 		# Add version tag at the first line.
 		sed -i "1i--$pkgver" "cabal.config"
