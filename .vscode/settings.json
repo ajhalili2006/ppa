@@ -1,0 +1,12 @@
+{
+    "conventionalCommits.scopes": [
+        "alpine/testing/hadolint",
+        "alpine/build/docker",
+        "global",
+        "gitlab-ci",
+        "sourcehut",
+        "docs",
+        "vscode"
+    ],
+    "git.alwaysSignOff": true
+}
