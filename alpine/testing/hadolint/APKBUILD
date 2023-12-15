@@ -18,10 +18,10 @@ cabal_update() {
 	msg "Freezing $pkgname dependencies"
 
 	# Resolve deps and generate fresh cabal.config with version constraints.
-	HOME="$_cabal_home" cabal update
+	HOME="$_cabal_home" cabal update --minimize-conflict-set
 	(
 		cd "$builddir"
-		HOME="$_cabal_home" cabal freeze --shadow-installed-packages
+		HOME="$_cabal_home" cabal freeze --shadow-installed-packages --minimize-conflict-set
 
 		# Add version tag at the first line.
 		sed -i "1i--$pkgver" "cabal.config"
